@@ -12,6 +12,6 @@ deps.mk: ${TARGETS} ${I_DSTS}
 	${CC} ${CPPFLAGS} -MM ${TARGETS} > $@
 
 clean:
-	rm -f ds1m1) *.o
+	rm -f ds1m12 *.o
 
 .PHONY: clean

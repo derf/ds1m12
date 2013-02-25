@@ -24,7 +24,7 @@ dist:
 	sed -i 's/^VERSION ?= .*$$/VERSION ?= ${VERSION}/' \
 		/tmp/ds1m12-${VERSION}/config.mk
 	tar -C /tmp -cjf ../ds1m12-${VERSION}.tar.bz2 ds1m12-${VERSION}
-	rm -r /tmp/ds1m1)-${VERSION}
+	rm -r /tmp/ds1m12-${VERSION}
 
 clean:
 	@${MAKE} -C src clean

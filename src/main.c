@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 	ds1m12_setup(handle);
 
 
-	sleep(5);
+	sleep(2);
 
 	if ((r = libusb_release_interface(handle, 0)) < 0)
 		warn("Failed to release interface 0: %s", libusb_error_name(r));

@@ -100,13 +100,13 @@ void ds1m12_bulk_in(libusb_device_handle *handle,
 		for (r = 0; r < expected_length; r++) {
 			printf("%02x", expected[r]);
 			if (expected[r] != data[r]){ 
-				errx(1, "response != expectation");
+				warnx("response != expectation");
 			}
 		}
 		puts("]");
 	}
 	if (rx_data != expected_length)
-		errx(1, "bulk receive: expected %d bytes, got %d", expected_length, rx_data);
+		warnx("bulk receive: expected %d bytes, got %d", expected_length, rx_data);
 
 }
 
@@ -136,7 +136,13 @@ void ds1m12_bulk_out(libusb_device_handle *handle,
 
 void ds1m12_setup(libusb_device_handle *handle)
 {
+	int i;
+
+	/* note: all bulk data is little endian */
+
+/*
 	unsigned char s_ok[] = {0x31, 0x60};
+
 	unsigned char s_s1[] = {0x31, 0x60,
 		0xfa, 0xaa, 0xfa, 0xaa, 0xfa, 0xaa, 0xfa, 0xaa};
 	unsigned char s_s2[] = {0x31, 0x60,
@@ -166,7 +172,7 @@ void ds1m12_setup(libusb_device_handle *handle)
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	unsigned char o_s10[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x20, 0x00, 0x00, 0x10, 0x00, 0x20, 0x00, 0x00,
+		0x20, 0x00, 0x00, 0x10, 0x00, 0x02, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x80, 0xe8};
 	unsigned char o_s11[] = {0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x30, 0x00,
 		0x02, 0x50, 0x00, 0x00, 0x28, 0x04, 0x85, 0x00,
@@ -182,7 +188,22 @@ void ds1m12_setup(libusb_device_handle *handle)
 		0x00, 0x40, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00};
 	unsigned char o_s14[] = {0x10, 0x00, 0x00};
 	unsigned char o_s15[] = {0x81, 0x87};
+	unsigned char o_s16[] = {0x19, 0xff, 0x01, 0xc9, 0x80, 0x01, 0x00, 0x88,
+		0x03, 0xf0, 0x80, 0x08, 0xc0, 0x00, 0x60, 0x00,
+		0x0f, 0x08, 0x80, 0x3c, 0x00, 0x00, 0x30, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	unsigned char o_s17[] = {0x00, 0x04, 0xd0, 0x02, 0x80, 0x02, 0x00, 0x00,
+		0x21, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+
+	unsigned char o_8187[] = {0x81, 0x87};
+	unsigned char s_ok7e[] = {0x31, 0x60, 0x7e};
+
+	unsigned char s_r1[] = {0x31, 0x60,
+		0xfa, 0xaa, 0xfa, 0xaa, 0xfa, 0xaa};
+	unsigned char *s_r2 = s_s2;
 
 	ds1m12_bulk_in(handle, 2, s_ok);
 	ds1m12_bulk_in(handle, 2, s_ok);
@@ -236,7 +257,174 @@ void ds1m12_setup(libusb_device_handle *handle)
 	ds1m12_bulk_out(handle, o_s11, 32);
 	ds1m12_bulk_out(handle, o_s12, 32);
 	ds1m12_bulk_out(handle, o_s13, 32);
-	ds1m12_bulk_in(handle, 3, s_s15); // 1228, 1248
 	ds1m12_bulk_out(handle, o_s14, 3);
 	ds1m12_bulk_out(handle, o_s15, 2);
+	ds1m12_bulk_in(handle, 3, s_s15); // 1228, 1248
+	ds1m12_bulk_out(handle, o_s15, 2);
+	ds1m12_bulk_in(handle, 3, s_s15); // 1250, 1252
+	// ...
+	ds1m12_bulk_in(handle, 2, s_ok); // 2242
+	ds1m12_bulk_in(handle, 2, s_ok); // 2244
+	ds1m12_bulk_in(handle, 2, s_ok); // 2246
+	ds1m12_bulk_in(handle, 2, s_ok); // 2248
+	ds1m12_bulk_in(handle, 2, s_ok); // 2250
+	ds1m12_control_out(handle, 9, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 0);
+	ds1m12_control_out(handle, 0, 2, 2);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 6, 2, 0);
+	ds1m12_control_out(handle, 7, 2, 0);
+	ds1m12_control_out(handle, 9, 2, 10);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2277
+	ds1m12_bulk_in(handle, 2, s_ok); // 2279
+	ds1m12_control_out(handle, 0, 1, 0);
+	ds1m12_control_out(handle, 0, 1, 2);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2287
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 0);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2301
+	ds1m12_control_out(handle, 0, 1, 2);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2315
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 11, 1, 0x0200);
+	ds1m12_control_out(handle, 0, 1, 0);
+	ds1m12_control_out(handle, 0, 1, 2);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2329
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	//...
+*/
+	unsigned char s_okaxa[] = {0x31, 0x60, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+		0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa};
+	unsigned char s_okaxxa[] = {0x31, 0x60, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+		0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+		0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+		0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa};
+	unsigned char s_okaxb[] = {0x31, 0x60, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+		0xaa, 0xab};
+	unsigned char s_okaxb4[] = {0x31, 0x60, 0xaa, 0xaa, 0xaa, 0xab};
+	unsigned char s_okaxa3[] = {0x31, 0x60, 0xaa, 0xaa, 0xaa};
+	unsigned char s_ok7e[] = {0x31, 0x60, 0x7e};
+	unsigned char s_ok[] = {0x31, 0x60};
+	unsigned char s_okfaab[] = {0x31, 0x60,
+		0xfa, 0xaa, 0xfa, 0xaa, 0xfa, 0xab};
+	unsigned char s_okfaaa16[] = {0x31, 0x60,
+		0xfa, 0xaa, 0xfa, 0xaa, 0xfa, 0xaa, 0xfa, 0xaa,
+		0xfa, 0xaa, 0xfa, 0xaa, 0xfa, 0xaa, 0xfa, 0xaa};
+	unsigned char o_aa[] = {0xaa};
+	unsigned char o_ab[] = {0xab};
+	unsigned char o_aaaaaa[] = {0xaa, 0xaa, 0xaa};
+	unsigned char o_aaaa[] = {0xaa, 0xaa};
+	unsigned char o_00879f[] = {0x00, 0x87, 0x9f};
+	unsigned char o_00839b[] = {0x00, 0x83, 0x9b};
+	unsigned char o_8187[] = {0x81, 0x87};
+
+
+	ds1m12_bulk_in(handle, 2, s_ok); // 2590
+	ds1m12_bulk_in(handle, 2, s_ok); // 2593
+	ds1m12_bulk_in(handle, 2, s_ok); // 2595
+	ds1m12_bulk_out(handle, o_aaaaaa, 3);
+	ds1m12_bulk_in(handle, 5, s_okaxa3); // 2598
+	ds1m12_bulk_out(handle, o_aaaa, 2);
+	ds1m12_bulk_out(handle, o_ab, 1);
+	ds1m12_bulk_in(handle, 6, s_okaxb4); // 2604
+	ds1m12_bulk_out(handle, o_00839b, 3);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2608
+	ds1m12_bulk_in(handle, 2, s_ok);
+	ds1m12_bulk_in(handle, 2, s_ok);
+	ds1m12_bulk_in(handle, 2, s_ok);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2616
+	ds1m12_control_out(handle, 9, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 0);
+	ds1m12_control_out(handle, 0, 2, 2);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 0, 2, 1);
+	ds1m12_control_out(handle, 6, 2, 0);
+	ds1m12_control_out(handle, 7, 2, 0);
+	ds1m12_control_out(handle, 9, 2, 10);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2643
+	ds1m12_bulk_in(handle, 2, s_ok); // 2645
+	ds1m12_control_out(handle, 0, 1, 0);
+	ds1m12_control_out(handle, 0, 1, 2);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2653
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 0);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2667
+	ds1m12_control_out(handle, 0, 1, 2);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2679
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 11, 1, 0x0200);
+	ds1m12_control_out(handle, 0, 1, 0);
+	ds1m12_control_out(handle, 0, 1, 2);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2693
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_control_out(handle, 0, 1, 1);
+	ds1m12_bulk_in(handle, 2, s_ok); // 2705
+	ds1m12_bulk_out(handle, o_aa, 1);
+	ds1m12_bulk_out(handle, o_aa, 1);
+	ds1m12_bulk_out(handle, o_aa, 1);
+	ds1m12_bulk_out(handle, o_aa, 1);
+	ds1m12_bulk_out(handle, o_aa, 1);
+	ds1m12_bulk_out(handle, o_aa, 1);
+	ds1m12_bulk_out(handle, o_aa, 1);
+	ds1m12_bulk_out(handle, o_aa, 1);
+	ds1m12_bulk_in(handle, 18, s_okfaaa16); //2723
+	ds1m12_bulk_out(handle, o_aa, 1);
+	ds1m12_bulk_out(handle, o_aa, 1);
+	ds1m12_bulk_out(handle, o_ab, 1);
+	ds1m12_bulk_in(handle, 8, s_okfaab); // 2731
+	ds1m12_bulk_out(handle, o_8187, 2);
+	ds1m12_bulk_in(handle, 3, s_ok7e); // 2735
+	ds1m12_bulk_in(handle, 2, s_ok); // 2737
+	for (i = 0; i < 21; i++)
+		ds1m12_bulk_out(handle, o_aaaaaa, 3);
+	ds1m12_bulk_in(handle, 32, s_okaxxa); // 2780
+	ds1m12_bulk_out(handle, o_aaaaaa, 3);
+	ds1m12_bulk_out(handle, o_aaaaaa, 3);
+	ds1m12_bulk_out(handle, o_aaaaaa, 3);
+	ds1m12_bulk_out(handle, o_aaaaaa, 3);
+	ds1m12_bulk_in( handle, 15, s_okaxa); // 2790
+	ds1m12_bulk_out(handle, o_aaaaaa, 3);
+	ds1m12_bulk_out(handle, o_aaaaaa, 3);
+	ds1m12_bulk_out(handle, o_ab, 1);
+	ds1m12_bulk_in(handle, 9, s_okaxb); // 2798
+	ds1m12_bulk_out(handle, o_00879f, 3);
+	ds1m12_bulk_in(handle, 2, s_ok);
 }
