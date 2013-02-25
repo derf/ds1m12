@@ -1,22 +1,3 @@
-/*
- * libusbx example program to list devices on the bus
- * Copyright © 2007 Daniel Drake <dsd@gentoo.org>
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- */
-
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +22,9 @@ static libusb_device_handle * find_and_open(libusb_device **devs)
 		if ((desc.idVendor == 0x0403) && (desc.idProduct == 0xfac2)) {
 			if ((r = libusb_open(dev, &handle)) < 0) {
 				err(1, "Failed to open USB device: %s", libusb_error_name(r));
+			}
+			if ((r = libusb_claim_interface(handle, 0)) < 0) {
+				err(1, "Failed to claim interface 0: %s", libusb_error_name(r));
 			}
 			return handle;
 		}
@@ -67,6 +51,8 @@ int main(void)
 
 	handle = find_and_open(devs);
 
+	if ((r = libusb_release_interface(handle, 0)) < 0)
+		warn("Failed to release interface 0: %s", libusb_error_name(r));
 	libusb_free_device_list(devs, 1);
 
 	libusb_close(handle);

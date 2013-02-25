@@ -1,5 +1,5 @@
 PACKAGE ?= ds1m12
-VERSION ?= ${shell git describe --dirty}
+VERSION ?= ${shell git describe --always --dirty}
 
 # Prefix for all installed files
 PREFIX ?= /usr/local
