@@ -1,11 +1,7 @@
-#include <err.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
+#include "ds1m12.h"
+#include "options.h"
 
-#include <libusb-1.0/libusb.h>
-
-static libusb_device_handle * find_and_open(libusb_device **devs)
+static libusb_device_handle * ds1m12_find_and_open(libusb_device **devs)
 {
 	libusb_device *dev;
 	libusb_device_handle *handle;
@@ -34,12 +30,14 @@ static libusb_device_handle * find_and_open(libusb_device **devs)
 	return NULL;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 	libusb_device **devs;
 	libusb_device_handle *handle;
 	int r;
 	ssize_t cnt;
+
+	ds1m12_parse_options(argc, argv);
 
 	r = libusb_init(NULL);
 	if (r < 0)
@@ -49,7 +47,7 @@ int main(void)
 	if (cnt < 0)
 		return (int) cnt;
 
-	handle = find_and_open(devs);
+	handle = ds1m12_find_and_open(devs);
 
 	if ((r = libusb_release_interface(handle, 0)) < 0)
 		warn("Failed to release interface 0: %s", libusb_error_name(r));
