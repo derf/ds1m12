@@ -22,9 +22,7 @@ my $format = <<'EOF';
 	L   # status
 	L   # length
 	L   # data length
-	B   # direction
-	B2  # bmType
-	B5  # bmRecipient
+	C   # bmReqType
 	C   # bRequest
 	S   # wValue
 	S   # wIndex
@@ -32,15 +30,20 @@ my $format = <<'EOF';
 	H*  # data
 EOF
 
+my %transfer_type = (
+	1 => 'URB_INTERRUPT',
+	2 => 'URB_CONTROL',
+	3 => 'URB_BULK',
+);
+
 sub process_packet {
 	my ( $user_data, $header, $packet ) = @_;
 
 	my (
-		$id,      $type,   $transtype,  $endpoint,  $device,
-		$busid,   $req,    $dataflag,   $sec,       $usec,
-		$status,  $length, $datalength, $direction, $bmtype,
-		$bmrecip, $breq,   $wvalue,     $windex,    $wlen,
-		$data
+		$id,     $type,   $transtype,   $endpoint, $device,
+		$busid,  $req,    $dataflag,    $sec,      $usec,
+		$status, $length, $datalength,, $bmreqtype,
+		$breq,   $wvalue, $windex,      $wlen,     $data
 	) = unpack( $format, $packet );
 
 	$cnt++;
@@ -55,8 +58,7 @@ sub process_packet {
 		$endpoint, $device, $busid );
 	printf( "  sreq %s\n data? %02x\nstatus %s\n", $req, $dataflag, $status );
 	printf( "   len %s\n  dlen %s\n", $length, $datalength );
-	printf( "   dir %d\nbmtype %d\nbmreci %d\n", $direction, $bmtype,
-		$bmrecip );
+	printf( "brtype %02x\n", $bmreqtype );
 	printf( "  breq %d\nwvalue %d\nwindex %d\n", $breq, $wvalue, $windex );
 	printf( "  wlen %s\n  data %s\n\n", $wlen || 0, $data // q{} );
 
