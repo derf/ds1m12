@@ -7,29 +7,66 @@ use Net::Pcap qw(:functions);
 
 our $VERSION = '0.00';
 
+my $cnt    = 0;
+my $format = <<'EOF';
+	H16 # ID
+	C   # type
+	C   # transtype
+	C   # endpoint
+	C   # device
+	S   # bus ID
+	C   # request
+	C   # data?
+	H16 # seconds
+	L   # usecs
+	L   # status
+	L   # length
+	L   # data length
+	B   # direction
+	B2  # bmType
+	B5  # bmRecipient
+	C   # bRequest
+	S   # wValue
+	S   # wIndex
+	S   # wLength
+	H*  # data
+EOF
+
 sub process_packet {
-	my ($user_data, $header, $packet) = @_;
+	my ( $user_data, $header, $packet ) = @_;
 
-	my ($id, $type, $transtype, $endpoint, $device, $busid, $req,
-	$dataflag, $sec, $usec, $status, $length, $datalength,
-	$direction, $bmtype, $bmrecip, $breq, $wvalue, $windex, $wlen, $data)
-		= unpack("H16 c c H2 C S H2 H2 H16 H8 H8 H8 H8 B B2 B5 C S S S H*", $packet);
+	my (
+		$id,      $type,   $transtype,  $endpoint,  $device,
+		$busid,   $req,    $dataflag,   $sec,       $usec,
+		$status,  $length, $datalength, $direction, $bmtype,
+		$bmrecip, $breq,   $wvalue,     $windex,    $wlen,
+		$data
+	) = unpack( $format, $packet );
 
-	printf("     ID %s\n  type %c\n ttype %d\n", $id, $type, $transtype);
-	printf("    ep %02x\n   dev %s\n busid %d\n", $endpoint, $device, $busid);
-	printf("  sreq %s\n data? %s\nstatus %s\n", $req, $dataflag, $status);
-	printf("   len %s\n  dlen %s\n", $length, $datalength);
-	printf("   dir %d\nbmtype %d\nbmreci %d\n", $direction, $bmtype, $bmrecip);
-	printf("  breq %d\nwvalue %d\nwindex %d\n", $breq, $wvalue, $windex);
-	printf("  wlen %d\n  data %s\n\n", $wlen || 0, $data // q{});
+	$cnt++;
 
-#	say unpack("W*", $packet);
+	if ( $device != 14 ) {
+		return;
+	}
+
+	printf( "    ID %s (%d)\n  type %c\n ttype %d\n",
+		$id, $cnt, $type, $transtype );
+	printf( "    ep %02x\n   dev %3d\n busid %02x\n",
+		$endpoint, $device, $busid );
+	printf( "  sreq %s\n data? %02x\nstatus %s\n", $req, $dataflag, $status );
+	printf( "   len %s\n  dlen %s\n", $length, $datalength );
+	printf( "   dir %d\nbmtype %d\nbmreci %d\n", $direction, $bmtype,
+		$bmrecip );
+	printf( "  breq %d\nwvalue %d\nwindex %d\n", $breq, $wvalue, $windex );
+	printf( "  wlen %s\n  data %s\n\n", $wlen || 0, $data // q{} );
+
+	#	say unpack("W*", $packet);
 }
 
 my $err;
-my $pcap = pcap_open_offline('ds1m12', \$err);
+my $pcap = pcap_open_offline( 'ds1m12', \$err );
 
-pcap_loop($pcap, -1, \&process_packet, undef);
+pcap_loop( $pcap, -1, \&process_packet, undef );
 
 pcap_close($pcap);
 
