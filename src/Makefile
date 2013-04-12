@@ -4,7 +4,7 @@ TARGETS = ${shell echo *.c}
 OBJECTS = ${TARGETS:.c=.o}
 
 ds1m12: deps.mk ${OBJECTS}
-	${CC} ${LDFLAGS} ${CFLAGS} -o $@ ${OBJECTS} ${LDLIBS}
+	${CC} ${LDFLAGS} ${CFLAGS} -o $@ -lftdi ${OBJECTS} ${LDLIBS}
 
 include deps.mk
 
