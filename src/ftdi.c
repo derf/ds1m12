@@ -73,6 +73,11 @@ static void c_ftdi_write_data(struct ftdi_context *ftdi, unsigned char *inbuf, i
 	}
 }
 
+static void c_channel(enum ftdi_interface n) {
+	int ret = ftdi_set_interface(ftdi, n);
+	check_ret("set interface", ret);
+}
+
 int main(int count, char *argv[])
 {
 	unsigned char inbuf[64];
@@ -89,6 +94,8 @@ int main(int count, char *argv[])
 		exit(1);
 	}
 
+	c_channel(INTERFACE_A);
+
 	ret = ftdi_usb_reset(ftdi);
 	check_ret("reset", ret);
 
@@ -103,7 +110,7 @@ int main(int count, char *argv[])
 	ret = ftdi_set_latency_timer(ftdi, 0x0a);
 	check_ret("latency", ret);
 
-	ret = ftdi_set_baudrate(ftdi, 1000000);
+	ret = ftdi_set_baudrate(ftdi, 3000000);
 	check_ret("baudrate", ret);
 
 	ret = ftdi_set_bitmode(ftdi, 0, 2);
@@ -193,6 +200,7 @@ int main(int count, char *argv[])
 
 	/* mach zu und neu, 3265 .. 3352 */
 	
+	c_channel(INTERFACE_B);
 
 	ret = ftdi_usb_reset(ftdi); check_ret("reset", ret);
 
@@ -213,6 +221,13 @@ int main(int count, char *argv[])
 	c_ftdi_write_data(ftdi, UCHAR("\x80\x00\x00"), 3);
 	while (1) {
 		c_ftdi_read_data(ftdi, inbuf, 4);
+		unsigned char watbuf[4] = {
+			inbuf[3],
+			inbuf[2],
+			inbuf[1],
+			inbuf[0]
+		};
+		printf("%10.10f\n", *((float*)watbuf));
 	}
 
 
