@@ -155,7 +155,7 @@ int main(int count, char *argv[])
 
 	/* 2097ff, loads some data */
 	printf("loading...\n");
-	int kfd = open("/tmp/ds1m12-cd/wat/ds1m12/ds1m12a_1k.rbf", O_RDONLY);
+	int kfd = open("DDL1M12.rbf", O_RDONLY);
 	char wat[19895];
 	read(kfd, wat, 19895);
 	close(kfd);
@@ -202,100 +202,48 @@ int main(int count, char *argv[])
 	
 	c_channel(INTERFACE_B);
 
-	ret = ftdi_usb_reset(ftdi); check_ret("reset", ret);
-
-	c_ftdi_write_data(ftdi, UCHAR("\x00\x83\x93"), 3); /* 3353 */
+	c_ftdi_write_data(ftdi, UCHAR("\x00\x1c\x1c"), 3);
 
 	ret = ftdi_usb_reset(ftdi); check_ret("reset", ret);
 
-	c_ftdi_write_data(ftdi, UCHAR("\x00\x8b\x9b"), 3); /* 3435 */
+	int interval_us = 500;
+	int ch_a = 1;
+	int ch_b = 1;
 
-	ret = ftdi_usb_reset(ftdi); check_ret("reset", ret);
+	unsigned char watbuff[6] = { 0x02, 0, 0, 0x08, 0, 0 };
+	interval_us--;
+	watbuff[1] = interval_us & 0xff;
+	watbuff[2] = (interval_us >> 8) & 0xff;
+	watbuff[4] = (interval_us >> 16) & 0xff;
+	watbuff[5] = (interval_us >> 24) & 0xff;
+	c_ftdi_write_data(ftdi, watbuff, 6); /* 2182ff */
 
-	c_ftdi_write_data(ftdi, UCHAR("\x00\x8f\x9f"), 3); /* 3521 */
-
-	ret = ftdi_usb_reset(ftdi); check_ret("reset", ret);
-
-	c_ftdi_write_data(ftdi, UCHAR("\x01\x7e\x7f\x04\x00\x02\x02\x90\x01\x03\x0c\x0f\x00\x8c\x9f\x05\x00\x00"), 0x12); /* 3946 */
-
-	c_ftdi_write_data(ftdi, UCHAR("\x80\x00\x00"), 3);
-	while (1) {
-		c_ftdi_read_data(ftdi, inbuf, 4);
-		unsigned char watbuf[4] = {
-			inbuf[3],
-			inbuf[2],
-			inbuf[1],
-			inbuf[0]
-		};
-		printf("%10.10f\n", *((float*)watbuf));
+	c_ftdi_write_data(ftdi, UCHAR("\x03\x0a\x0a"), 3);
+	c_ftdi_write_data(ftdi, UCHAR("\x00\x03\x03"), 3);
+	if (ch_a && ch_b) {
+		c_ftdi_write_data(ftdi, UCHAR("\x00\x04\x7c"), 3);
+	} else if (ch_a && !ch_b) {
+		c_ftdi_write_data(ftdi, UCHAR("\x00\x0c\x3c"), 3);
+	} else if (!ch_a && ch_b) {
+		c_ftdi_write_data(ftdi, UCHAR("\x00\x14\x5c"), 3);
+	} else {
+		printf("wat\n");
+		exit(1);
 	}
 
-
-
-	for (int i = 0; i < 26; i++) {
-		ret = ftdi_write_data(ftdi, UCHAR("\xaa\xaa\xaa"), 3);
-		check_ret("write", ret);
+	if (ch_a && ch_b) {
+		while (1) {
+			while (ftdi_read_data(ftdi, inbuf, 4) > 0) {
+				fprintf(stderr, "%02x%02x %02x%02x\n", inbuf[1], inbuf[0],  inbuf[3], inbuf[2]);
+			}
+		}
+	} else {
+		while (1) {
+			while (ftdi_read_data(ftdi, inbuf, 2) > 0) {
+				fprintf(stderr, "%02x%02x\n", inbuf[1], inbuf[0]);
+			}
+		}
 	}
-
-	ret = ftdi_read_data(ftdi, inbuf, 0x48);
-	check_ret("read", ret);
-	dump_buf(inbuf, 0x48);
-
-	ret = ftdi_write_data(ftdi, UCHAR("\xab"), 1);
-	check_ret("write 0xab", ret);
-
-	ret = ftdi_read_data(ftdi, inbuf, 7);
-	check_ret("read", ret);
-	dump_buf(inbuf, 7);
-
-	ret = ftdi_write_data(ftdi, UCHAR("\x00\x8f\x9f"), 3);
-	check_ret("write", ret);
-
-	ret = ftdi_set_latency_timer(ftdi, 0x01);
-	check_ret("latency", ret);
-
-	ret = ftdi_set_latency_timer(ftdi, 0x0a);
-	check_ret("latency", ret);
-
-	ret = ftdi_set_bitmode(ftdi, 0, 2);
-	check_ret("bitmode", ret);
-
-	ret = ftdi_usb_reset(ftdi);
-	check_ret("reset", ret);
-
-	printf("Typ: %d\n", ftdi->type);
-	printf("usb_read_timeout: %d\n", ftdi->usb_read_timeout);
-	printf("usb_write_timeout: %d\n", 
-		ftdi->usb_write_timeout);
-	printf("baudrate: %d\n",  ftdi->baudrate);
-	printf("bitbang_enabled: %x\n", ftdi->bitbang_enabled);
-	printf("bitbang_mode: %x\n", ftdi->bitbang_mode);
-
-	ret = ftdi_write_data(ftdi, UCHAR("\xaa"), 1);
-	check_ret("write 0xaa", ret);
-
-	ret = ftdi_write_data(ftdi, UCHAR("\xaa"), 1);
-	check_ret("write 0xaa", ret);
-
-	ret = ftdi_write_data(ftdi, UCHAR("\xaa"), 1);
-	check_ret("write 0xaa", ret);
-
-	ret = ftdi_write_data(ftdi, UCHAR("\xaa"), 1);
-	check_ret("write 0xaa", ret);
-
-	ret = ftdi_write_data(ftdi, UCHAR("\xaa"), 1);
-	check_ret("write 0xaa", ret);
-
-	ret = ftdi_read_data(ftdi, inbuf, 6);
-	check_ret("read", ret);
-	dump_buf(inbuf, 6);
-
-	ret = ftdi_write_data(ftdi, UCHAR("\xab"), 1);
-	check_ret("write 0xab", ret);
-
-	ret = ftdi_read_data(ftdi, inbuf, 6);
-	check_ret("read", ret);
-	dump_buf(inbuf, 6);
 
 	ret = ftdi_usb_close(ftdi);
 	check_ret("close", ret);
