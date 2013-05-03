@@ -257,7 +257,7 @@ int main(int count, char *argv[])
 		int d1 = 0, d2 = 0;
 		while (1) {
 			while (ftdi_read_data(ftdi, inbuf, 4) > 0) {
-				// fprintf(stderr, "%02x%02x %02x%02x\n", inbuf[1], inbuf[0],  inbuf[3], inbuf[2]);
+				fprintf(stderr, "%02x%02x %02x%02x\n", inbuf[1], inbuf[0],  inbuf[3], inbuf[2]);
 				if (inbuf[1] & 0x40) {
 					if (1 || !(d1 & 0xff)) {
 						fprintf(stderr, "DROP A %d (%d, %f%%)\n", i, d1, d1 * 100. / i);
@@ -278,7 +278,7 @@ int main(int count, char *argv[])
 		int d = 0;
 		while (1) {
 			while (ftdi_read_data(ftdi, inbuf, 2) > 0) {
-				// fprintf(stderr, "%02x%02x\n", inbuf[1], inbuf[0]);
+				fprintf(stderr, "%02x%02x\n", inbuf[1], inbuf[0]);
 				if (inbuf[1] & 0x40) {
 					if (1 || !(d & 0xff)) {
 						fprintf(stderr, "DROP %d (%d, %f%%)\n", i, d, d * 100. / i);
