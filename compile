@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+f() {
+	printf '\n\033[4m%-'$(stty size | cut -d ' ' -f 2)'s\033[m\n' "$*" >&2
+}
+
+d() { f $*; "$@"; }
+
+d cc -ggdb -Os -Wall -Wextra -std=gnu99  -o log src/log.c   -lftdi

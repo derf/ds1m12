@@ -137,6 +137,22 @@ int main(int count, char *argv[])
 
 	printf("\n");
 
+	ftdi->eeprom_size *= 2;
+
+	printf("btw, reading eeprom (%d bytes)\n", ftdi->eeprom_size);
+	unsigned char *watrom = malloc(ftdi->eeprom_size);
+	ftdi_read_eeprom(ftdi, watrom);
+	struct ftdi_eeprom *watdec = malloc(sizeof(struct ftdi_eeprom));
+	ftdi_eeprom_decode(watdec, watrom, ftdi->eeprom_size);
+
+	for (int i = 0; i < ftdi->eeprom_size / 2; i++) {
+		printf("[%02x] %02x%02x %c%c\n", i, watrom[2*i+1], watrom[2*i], isalpha(watrom[2*i+1]) ? watrom[2*i+1] : '.', isalpha(watrom[2*i]) ? watrom[2*i] : '.');
+	}
+
+	printf("ven %04x pro %04x manuf \"%s\" prod \"%s\"\n", watdec->vendor_id, watdec->product_id, watdec->manufacturer, watdec->product);
+
+	printf("\n");
+
 	c_ftdi_write_data(ftdi, UCHAR("\xab"), 1);
 
 	c_ftdi_read_data(ftdi, inbuf, 2);
@@ -209,8 +225,8 @@ int main(int count, char *argv[])
 
 	ret = ftdi_usb_reset(ftdi); check_ret("reset", ret);
 
-	int interval_us = 500;
-	int ch_a = 1;
+	int interval_us = 3;
+	int ch_a = 0;
 	int ch_b = 1;
 
 	unsigned char watbuff[6] = { 0x02, 0, 0, 0x08, 0, 0 };
@@ -220,55 +236,6 @@ int main(int count, char *argv[])
 	watbuff[4] = (interval_us >> 16) & 0xff;
 	watbuff[5] = (interval_us >> 24) & 0xff;
 	c_ftdi_write_data(ftdi, watbuff, 6); /* 2182ff */
-
-
-
-	uint8_t led = 0x1c;
-	while (1) {
-		char buf[4];
-		int count;
-		while (count = read(0, buf, 4))
-		{
-			if (buf[1] == ' ' && (buf[3] == '\n' || count == 3)) // valid line
-			{
-				if (buf[0] == '1' || buf[0] == '2' || buf[0] == '3') // valid led
-				{
-					if (buf[2] == '0' || buf[2] == '1') // valid state
-					{
-						if (buf[0] == '1' && buf[2] == '1') {
-							led &= ~(0x10);
-						} else if (buf[0] == '1' && buf[2] == '0') {
-							led |= 0x10;
-						} else if (buf[0] == '2' && buf[2] == '1') {
-							led &= ~(0x08);
-						} else if (buf[0] == '2' && buf[2] == '0') {
-							led |= 0x08;
-						} else if (buf[0] == '3' && buf[2] == '1') {
-							led &= ~(0x04);
-						} else if (buf[0] == '3' && buf[2] == '0') {
-							led |= 0x04;
-						}
-						char wat[3];
-						wat[0] = 0;
-						wat[2] = 0x1c;
-						wat[1] = led;
-						printf("r %c %c wr %02x\n", buf[0], buf[2], wat[1]);
-						c_ftdi_write_data(ftdi, wat, 3);
-					}
-				}
-			}
-		}
-
-		c_ftdi_write_data(ftdi, UCHAR("\x00\x0c\x1c"), 3);
-		usleep(150000);
-		c_ftdi_write_data(ftdi, UCHAR("\x00\x14\x1c"), 3);
-		usleep(150000);
-		c_ftdi_write_data(ftdi, UCHAR("\x00\x18\x1c"), 3);
-		usleep(150000);
-		c_ftdi_write_data(ftdi, UCHAR("\x00\x14\x1c"), 3);
-		usleep(150000);
-	}
-
 
 	c_ftdi_write_data(ftdi, UCHAR("\x03\x0a\x0a"), 3);
 	c_ftdi_write_data(ftdi, UCHAR("\x00\x03\x03"), 3); /* coupling */
@@ -286,15 +253,39 @@ int main(int count, char *argv[])
 
 
 	if (ch_a && ch_b) {
+		int i = 0;
+		int d1 = 0, d2 = 0;
 		while (1) {
 			while (ftdi_read_data(ftdi, inbuf, 4) > 0) {
-				fprintf(stderr, "%02x%02x %02x%02x\n", inbuf[1], inbuf[0],  inbuf[3], inbuf[2]);
+				// fprintf(stderr, "%02x%02x %02x%02x\n", inbuf[1], inbuf[0],  inbuf[3], inbuf[2]);
+				if (inbuf[1] & 0x40) {
+					if (1 || !(d1 & 0xff)) {
+						fprintf(stderr, "DROP A %d (%d, %f%%)\n", i, d1, d1 * 100. / i);
+					}
+					d1++;
+				}
+				if (inbuf[3] & 0x40) {
+					if (1 || !(d2 & 0xff)) {
+						fprintf(stderr, "DROP B %d (%d, %f%%)\n", i, d2, d2 * 100. / i);
+					}
+					d2++;
+				}
+				i++;
 			}
 		}
 	} else {
+		int i = 0;
+		int d = 0;
 		while (1) {
 			while (ftdi_read_data(ftdi, inbuf, 2) > 0) {
-				fprintf(stderr, "%02x%02x\n", inbuf[1], inbuf[0]);
+				// fprintf(stderr, "%02x%02x\n", inbuf[1], inbuf[0]);
+				if (inbuf[1] & 0x40) {
+					if (1 || !(d & 0xff)) {
+						fprintf(stderr, "DROP %d (%d, %f%%)\n", i, d, d * 100. / i);
+					}
+					d++;
+				}
+				i++;
 			}
 		}
 	}
