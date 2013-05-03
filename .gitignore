@@ -2,6 +2,7 @@
 /src/*.o
 /src/ds1m12
 /src/ds1m12-log
+/src/firmware.h
 /man/*.1
 *~
 core

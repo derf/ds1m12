@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "firmware.h"
 
 #define UCHAR(str) ( (unsigned char *) (str) )
 
@@ -174,13 +175,6 @@ int main(int count, char *argv[])
 
 	/* 2097ff, loads some data */
 	printf("loading...\n");
-	int kfd = open("DDL1M12.rbf", O_RDONLY);
-	if (!kfd) {
-		perror("open firmware file");
-	}
-	char wat[19895];
-	read(kfd, wat, 19895);
-	close(kfd);
 
 	int remaining = 19895;
 	int pos = 0;
@@ -191,7 +185,7 @@ int main(int count, char *argv[])
 		nowbuf[0] = 0x19;
 		nowbuf[1] = (now-1) & 0xff;
 		nowbuf[2] = ((now-1) >> 8) & 0xff;
-		memcpy(nowbuf + 3, wat + pos, now);
+		memcpy(nowbuf + 3, ___DDL1M12_rbf + pos, now);
 
 		printf("writing %d bytes of %d remaining\n", now, remaining);
 		ftdi_write_data(ftdi, nowbuf, now + 3);
