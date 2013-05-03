@@ -10,12 +10,12 @@ install: install-bin
 install-bin:
 	@echo installing executables to ${bin_dir}
 	@mkdir -p ${bin_dir}
-	@cp src/ds1m12 ${bin_dir}
-	@chmod 755 ${bin_dir}/ds1m12
+	@cp src/ds1m12-log ${bin_dir}
+	@chmod 755 ${bin_dir}/ds1m12-log
 
 
 uninstall:
-	rm -f ${bin_dir}/ds1m12
+	rm -f ${bin_dir}/ds1m12-log
 
 dist:
 	mkdir /tmp/ds1m12-${VERSION}

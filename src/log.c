@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <usb.h>
 #include <fcntl.h>
+#include <ctype.h>
+#include <string.h>
+
 
 #define UCHAR(str) ( (unsigned char *) (str) )
 

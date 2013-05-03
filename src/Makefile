@@ -3,7 +3,7 @@ include ../config.mk
 TARGETS = ${shell echo *.c}
 OBJECTS = ${TARGETS:.c=.o}
 
-ds1m12: deps.mk ${OBJECTS}
+ds1m12-log: deps.mk ${OBJECTS}
 	${CC} ${LDFLAGS} ${CFLAGS} -o $@ -lftdi ${OBJECTS} ${LDLIBS}
 
 include deps.mk
