@@ -16,7 +16,7 @@ static void check_ret(char *desc, int ret)
 	} else if (ret > 0) {
 		fprintf(stdout, "%s ok: %d\n", desc, ret);
 	} else {
-		fprintf(stdout, "%s 0\n");
+		fprintf(stdout, "%s 0\n", desc);
 	}
 }
 
